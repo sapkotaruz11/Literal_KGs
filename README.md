@@ -4,14 +4,13 @@ A repository of collection of knowledge graphs with literal values for predictin
 
 ## Current datasets
 
-- DB15k
-- FB15k
+- FB15k-237-lit
 - Literally Wikidata
     - 1k
     - 19k
     - 48k
 
-- YAGO15k
+- YAGO10 plus
 
 ## Dataset Structures
 
@@ -23,12 +22,12 @@ A repository of collection of knowledge graphs with literal values for predictin
 
 ## Dataset Statistics 
 
-| Split           | DB15k   | FB15k-237  | YAGO    |
-|-----------------|---------|------------|---------|
-| Entity Triples  | 99,028  | 310,116    | 122,886 |
-| Train           | 38,484  | 18,428     | 18,826  |
-| Test            | 4,811   | 2,304      | 2,354   |
-| Validation      | 4,810   | 2,305      | 2,355   |
-----------------------------------------------------
+| Split           | DB15k   | FB15k-237  | YAGO10 plus   |
+|-----------------|---------|------------|---------------|
+| Entity Triples  | 99,028  | 310,116    | 1,089,040     |
+| Train           | 38,484  | 23,398     | 93,310        |
+| Test            | 4,811   | 2,926      | 11,664        |
+| Validation      | 4,810   | 2,926      | 11664         |
+----------------------------------------------------------
 train/test/validation refer to the split of Numeric Values for literal prediction task
 FB15k-237 has total of 48105 numeric triples with 116 different relations, only the top 10 relations are considered for literal prediction task ( as done in [Learning Numerical Attributes in Knowledge Bases](https://www.akbc.ws/2019/papers/BJlh0x9ppQ) 

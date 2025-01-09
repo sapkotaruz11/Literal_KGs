@@ -1,4 +1,3 @@
-head	relation	tails
 <http://yago-knowledge.org/resource/Ahmedabad>	<http://yago-knowledge.org/resource/hasLatitude>	23.03
 <http://yago-knowledge.org/resource/Javier_Bardem>	<http://yago-knowledge.org/resource/wasBornOnDate>	1969-03-01
 <http://yago-knowledge.org/resource/Livonia,_Michigan>	<http://yago-knowledge.org/resource/wasCreatedOnDate>	1950.0000
