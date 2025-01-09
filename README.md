@@ -30,4 +30,3 @@ A repository of collection of knowledge graphs with literal values for predictin
 | Validation      | 4,810   | 2,926      | 11664         |
 ----------------------------------------------------------
 train/test/validation refer to the split of Numeric Values for literal prediction task
-FB15k-237 has total of 48105 numeric triples with 116 different relations, only the top 10 relations are considered for literal prediction task ( as done in [Learning Numerical Attributes in Knowledge Bases](https://www.akbc.ws/2019/papers/BJlh0x9ppQ) 
