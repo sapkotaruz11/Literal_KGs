@@ -72,62 +72,58 @@ def split_obj_property_df(df, root, store=False):
     # Shuffle the DataFrame
     df_shuffled = df.sample(frac=1, random_state=42).reset_index(drop=True)
 
-    # Function to ensure all entities and relations are in the training set
-    def ensure_all_entities_and_relations_in_train(
-        df, all_entities, all_relations, max_samples_per_item=3
-    ):
-        train_set = pd.DataFrame(columns=df.columns)
-        used_indices = set()
-
-        # Ensure all entities are included
-        for entity in all_entities:
-            entity_triples = df[(df["subject"] == entity) | (df["object"] == entity)]
-            samples = entity_triples.sample(
-                min(len(entity_triples), max_samples_per_item), random_state=42
-            )
-            used_indices.update(samples.index)
-            train_set = pd.concat([train_set, samples], ignore_index=True)
-
-        # Ensure all relations are included
-        for relation in all_relations:
-            if not (train_set["predicate"] == relation).any():
-                relation_triples = df[df["predicate"] == relation]
-                samples = relation_triples.sample(
-                    min(len(relation_triples), max_samples_per_item), random_state=42
-                )
-                used_indices.update(samples.index)
-                train_set = pd.concat([train_set, samples], ignore_index=True)
-
-        train_set.drop_duplicates(inplace=True)
-        return train_set, used_indices
-
-    # Ensure all entities and relations are in the training set
-    train_set, used_indices = ensure_all_entities_and_relations_in_train(
-        df_shuffled, all_entities, all_relations
-    )
-
-    # Remove the selected triples from the shuffled DataFrame accurately
-    train_keys = train_set[["subject", "predicate", "object"]].apply(tuple, axis=1)
-    df_keys = df_shuffled[["subject", "predicate", "object"]].apply(tuple, axis=1)
-    remaining_df = df_shuffled[~df_keys.isin(train_keys)].reset_index(drop=True)
-
-    # Determine how many more triples to add to training set
-    target_train_frac = 0.8
-    n_total = len(df_shuffled)
-    n_target_train = int(target_train_frac * n_total)
-    n_to_add = n_target_train - len(train_set)
-
-    # Add more triples to train set (stratified by predicate)
-    if n_to_add > 0:
-        stratify_col = remaining_df["predicate"]
-        add_to_train_df, remaining_df = train_test_split(
-            remaining_df, train_size=n_to_add, stratify=stratify_col, random_state=42
-        )
-        df_train = pd.concat([train_set, add_to_train_df], ignore_index=True)
-
-    df_val, df_test = train_test_split(
-        remaining_df, test_size=0.5, stratify=remaining_df["predicate"], random_state=42
-    )
+    # Initialize splits
+    train_list, test_list, val_list = [], [], []
+    
+    # For each predicate, ensure proper stratification
+    for predicate in all_relations:
+        pred_df = df_shuffled[df_shuffled["predicate"] == predicate].copy()
+        n_total = len(pred_df)
+        
+        # Calculate split sizes (60-30-10)
+        n_train = max(1, int(n_total * 0.6))  # Ensure at least 1 in train
+        n_test = max(1, int(n_total * 0.3)) if n_total > 1 else 0
+        n_val = n_total - n_train - n_test
+        
+        # Ensure we don't exceed total
+        if n_train + n_test + n_val > n_total:
+            if n_val > 0:
+                n_val -= 1
+            elif n_test > 0:
+                n_test -= 1
+        
+        # Split the predicate data
+        train_list.append(pred_df.iloc[:n_train])
+        if n_test > 0:
+            test_list.append(pred_df.iloc[n_train:n_train + n_test])
+        if n_val > 0:
+            val_list.append(pred_df.iloc[n_train + n_test:n_train + n_test + n_val])
+    
+    # Combine all splits
+    df_train = pd.concat(train_list, ignore_index=True)
+    df_test = pd.concat(test_list, ignore_index=True) if test_list else pd.DataFrame(columns=df.columns)
+    df_val = pd.concat(val_list, ignore_index=True) if val_list else pd.DataFrame(columns=df.columns)
+    
+    # Ensure all entities appear in training set (add missing entities)
+    train_entities = set(df_train["subject"]).union(set(df_train["object"]))
+    missing_entities = all_entities - train_entities
+    
+    if missing_entities:
+        print(f"Adding {len(missing_entities)} missing entities to training set")
+        for entity in missing_entities:
+            # Find triples containing this entity in test or val
+            entity_in_test = df_test[(df_test["subject"] == entity) | (df_test["object"] == entity)]
+            entity_in_val = df_val[(df_val["subject"] == entity) | (df_val["object"] == entity)]
+            
+            # Move one triple from test or val to train
+            if not entity_in_test.empty:
+                move_triple = entity_in_test.iloc[0:1]
+                df_train = pd.concat([df_train, move_triple], ignore_index=True)
+                df_test = df_test.drop(entity_in_test.index[0]).reset_index(drop=True)
+            elif not entity_in_val.empty:
+                move_triple = entity_in_val.iloc[0:1]
+                df_train = pd.concat([df_train, move_triple], ignore_index=True)
+                df_val = df_val.drop(entity_in_val.index[0]).reset_index(drop=True)
 
     # Function to log stats of each split
     def log_stats(df, name):
@@ -142,13 +138,10 @@ def split_obj_property_df(df, root, store=False):
     log_stats(df_test, "Test")
 
     if store:
-        literal_root = f"{root}/literals"
-        os.makedirs(literal_root, exist_ok=True)
-        df_train.to_csv(
-            f"{literal_root}/train.txt", sep="\t", header=False, index=False
-        )
-        df_test.to_csv(f"{literal_root}/test.txt", sep="\t", header=False, index=False)
-        df_val.to_csv(f"{literal_root}/valid.txt", sep="\t", header=False, index=False)
+        os.makedirs(root, exist_ok=True)
+        df_train.to_csv(f"{root}/train.txt", sep="\t", header=False, index=False)
+        df_test.to_csv(f"{root}/test.txt", sep="\t", header=False, index=False)
+        df_val.to_csv(f"{root}/valid.txt", sep="\t", header=False, index=False)
     print("Enhanced train, validation, and test splits created and saved.")
 
 
@@ -164,18 +157,18 @@ def split_data_property_df(df, root, store=False):
     df_numeric = df[df["object"].apply(is_strictly_numeric)].copy()
     # Step 2: Initialize splits
     train, val, test = [], [], []
-    train_ratio, val_ratio = 0.8, 0.1  # Remaining 0.1 is test
+    train_ratio, test_ratio, val_ratio = 0.6, 0.3, 0.1  # 60-30-10 split
 
     #  Stratified sampling by predicate
     for pred, group in df_numeric.groupby("predicate"):
         group = group.sample(frac=1, random_state=42)  # Shuffle
         n = len(group)
         n_train = int(n * train_ratio)
-        n_val = int(n * val_ratio)
+        n_test = int(n * test_ratio)
 
         train.append(group.iloc[:n_train])
-        val.append(group.iloc[n_train : n_train + n_val])
-        test.append(group.iloc[n_train + n_val :])
+        test.append(group.iloc[n_train : n_train + n_test])
+        val.append(group.iloc[n_train + n_test :])  # Remaining goes to validation
 
     #  Concatenate results
     df_train = pd.concat(train).reset_index(drop=True)
