@@ -1,0 +1,9 @@
+dataset	total_entities	total_relations	train_count	test_count	valid_count
+DB15k	12842	279	79222	9903	9903
+FB15k-237	14541	237	272115	20466	17535
+mutagenesis	14250	8	46627	4198	4198
+YAGO15k	15403	32	110441	13800	13815
+DB15k_literals	7078	9	9464	1183	1184
+FB15k-237_literals	10066	11	18615	2329	2306
+mutagenesis_literals	6124	4	5267	659	658
+YAGO15k_literals	15081	7	18825	2354	2353

@@ -22,11 +22,11 @@ A repository of collection of knowledge graphs with literal values for predictin
 
 ## Dataset Statistics 
 
-| Split           | DB15k   | FB15k-237  | YAGO10 plus   |
+| Split           | DB15k   | FB15k-237  | YAGO15k   |
 |-----------------|---------|------------|---------------|
-| Entity Triples  | 99,028  | 310,116    | 1,089,040     |
-| Train           | 38,484  | 23,398     | 93,310        |
-| Test            | 4,811   | 2,926      | 11,664        |
-| Validation      | 4,810   | 2,926      | 11664         |
+| Entity Triples  | 99,028  | 310,116    | 138,056     |
+| Train           | 9,464  | 18, 615     |   18,825      |
+| Test            |  1,183  | 2,329      | 2,354        |
+| Validation      | 1,184   | 2,306     | 2,354         |
 ----------------------------------------------------------
 train/test/validation refer to the split of Numeric Values for literal prediction task
